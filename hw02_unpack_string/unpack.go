@@ -16,23 +16,21 @@ func Unpack(s string) (string, error) {
 	for _, value := range s {
 		repeat, ok := strconv.Atoi(string(value))
 		_, prevok := strconv.Atoi(string(prev))
-		if prev > 0 { //not first
-			if ok == nil { //current is number
-				if prevok == nil { //prev is number too
-					return "", ErrInvalidString
-				}
-
-				res += strings.Repeat(string(prev), repeat)
-			} else { //current is letter
-				if prevok != nil { //prev is letter
-					res += string(prev)
-				}
-				if index == utf8.RuneCountInString(s)-1 { //curr is last
-					res += string(value)
-				}
+		if prev > 0 { // not first
+			if ok == nil && prevok == nil { // two numbers
+				return "", ErrInvalidString
 			}
-		} else if ok == nil {
+			if ok == nil { // current is number
+				res += strings.Repeat(string(prev), repeat)
+			} else if prevok != nil { // prev is letter
+				res += string(prev)
+			}
+		} else if ok == nil { // first is number
 			return "", ErrInvalidString
+		}
+
+		if index == utf8.RuneCountInString(s)-1 && ok != nil { // curr is last
+			res += string(value)
 		}
 
 		prev = value
