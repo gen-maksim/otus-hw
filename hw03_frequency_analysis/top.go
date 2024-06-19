@@ -17,7 +17,7 @@ func Top10(s string) []string {
 	for _, word := range strings.Fields(s) {
 		if _, ok := words[word]; ok {
 			i := words[word]
-			i.Count = i.Count + 1
+			i.Count++
 			words[word] = i
 		} else {
 			words[word] = wordCount{word: word, Count: 1}
@@ -42,7 +42,7 @@ func Top10(s string) []string {
 	})
 
 	// leave only first ten
-	var res []string
+	res := []string{}
 	i := 0
 	for _, wc := range wordSlice {
 		res = append(res, wc.word)
