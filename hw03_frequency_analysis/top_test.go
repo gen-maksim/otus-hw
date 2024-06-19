@@ -77,6 +77,16 @@ func TestTop10(t *testing.T) {
 				"то",        // 4
 			}
 			require.Equal(t, expected, Top10(text))
+
+			expected = []string{
+				"повторяет",
+				"Текст,",
+				"и",
+				"который",
+				"мало",
+				"слов",
+			}
+			require.Equal(t, expected, Top10("Текст, который повторяет и повторяет мало слов"))
 		}
 	})
 }
