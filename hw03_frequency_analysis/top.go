@@ -15,7 +15,7 @@ func Top10(s string) []string {
 
 	// count words
 	for _, word := range strings.Fields(s) {
-		words[word] += 1
+		words[word]++
 	}
 
 	// move from map to slice
