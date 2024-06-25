@@ -7,38 +7,32 @@ import (
 
 type wordCount struct {
 	word  string
-	Count int
+	count int
 }
 
 func Top10(s string) []string {
-	words := map[string]wordCount{}
+	words := map[string]int{}
 
 	// count words
 	for _, word := range strings.Fields(s) {
-		if _, ok := words[word]; ok {
-			i := words[word]
-			i.Count++
-			words[word] = i
-		} else {
-			words[word] = wordCount{word: word, Count: 1}
-		}
+		words[word] += 1
 	}
 
 	// move from map to slice
 	wordSlice := make([]wordCount, 0, len(words))
-	for _, value := range words {
-		if value.word == "" {
+	for word, value := range words {
+		if word == "" {
 			continue
 		}
-		wordSlice = append(wordSlice, value)
+		wordSlice = append(wordSlice, wordCount{word: word, count: value})
 	}
 
 	// sort slice by count and lex
 	sort.Slice(wordSlice, func(i, j int) bool {
-		if wordSlice[i].Count == wordSlice[j].Count {
+		if wordSlice[i].count == wordSlice[j].count {
 			return (wordSlice[i].word) < (wordSlice[j].word)
 		}
-		return wordSlice[i].Count > wordSlice[j].Count
+		return wordSlice[i].count > wordSlice[j].count
 	})
 
 	// leave only first ten
