@@ -1,7 +1,6 @@
 package hw04lrucache
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -61,15 +60,21 @@ func TestList(t *testing.T) {
 		end := l.Back() // 20
 		l.Remove(end)   // [10, 30]
 		require.Equal(t, 2, l.Len())
-		printList(l)
 	})
 
-}
+	t.Run("lru", func(t *testing.T) {
+		l := NewList()
 
-func printList(l List) {
-	elems := make([]int, 0, l.Len())
-	for i := l.Front(); i != nil; i = i.Next {
-		elems = append(elems, i.Value.(int))
-	}
-	fmt.Println(elems)
+		l.PushFront(30)         // [30]
+		l.MoveToFront(l.Back()) // [30]
+		l.PushFront(20)         // [20, 30]
+		p := l.PushFront(10)    // [10, 20, 30]
+		l.Remove(l.Back())      // [10, 20]
+		l.MoveToFront(p)        // [10, 20]
+		l.PushFront(40)         // [40, 10, 20]
+		l.Remove(l.Back())      // [40, 10]
+
+		end := l.Back() // 10
+		require.Equal(t, 10, end.Value)
+	})
 }

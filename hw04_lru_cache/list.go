@@ -18,7 +18,6 @@ type ListItem struct {
 }
 
 type list struct {
-	list  []ListItem
 	count int
 	first *ListItem
 	last  *ListItem
@@ -27,7 +26,6 @@ type list struct {
 func (l *list) PushFront(v interface{}) *ListItem {
 	nl := ListItem{Value: v, index: l.count}
 	l.count++
-	l.list = append(l.list, nl)
 
 	if l.count != 1 {
 		prevL := l.first
@@ -45,7 +43,6 @@ func (l *list) PushFront(v interface{}) *ListItem {
 func (l *list) PushBack(v interface{}) *ListItem {
 	nl := ListItem{Value: v, index: l.count}
 	l.count++
-	l.list = append(l.list, nl)
 
 	if l.count != 1 {
 		nextL := l.last
@@ -61,31 +58,26 @@ func (l *list) PushBack(v interface{}) *ListItem {
 }
 
 func (l *list) Remove(i *ListItem) {
-	if l.count == 0 {
-		return
-	}
-
-	l.eject(i)
-	i = nil
-}
-
-func (l *list) eject(i *ListItem) {
-	if i.Prev == nil { // first
+	switch {
+	case i.Prev == nil: // first
 		i.Next.Prev = nil
 		l.first = i.Next
-	} else if i.Next == nil { // last
+	case i.Next == nil: // last
 		i.Prev.Next = nil
 		l.last = i.Prev
-	} else { // in the middle
+	default: // in the middle
 		i.Next.Prev, i.Prev.Next = i.Prev, i.Next
 	}
 
-	l.list = append(l.list[:i.index], l.list[i.index+1:]...)
 	l.count--
 }
 
 func (l *list) MoveToFront(i *ListItem) {
-	l.eject(i)
+	if l.count == 1 {
+		return
+	}
+
+	l.Remove(i)
 	l.PushFront(i.Value)
 	i = nil
 }
