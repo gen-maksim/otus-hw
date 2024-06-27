@@ -14,7 +14,6 @@ type ListItem struct {
 	Value interface{}
 	Next  *ListItem
 	Prev  *ListItem
-	index int
 }
 
 type list struct {
@@ -24,37 +23,37 @@ type list struct {
 }
 
 func (l *list) PushFront(v interface{}) *ListItem {
-	nl := ListItem{Value: v, index: l.count}
+	nl := &ListItem{Value: v}
 	l.count++
 
 	if l.count != 1 {
 		prevL := l.first
-		prevL.Prev = &nl
+		prevL.Prev = nl
 		nl.Next = prevL
 		nl.Prev = nil
 	} else {
-		l.last = &nl
+		l.last = nl
 	}
-	l.first = &nl
+	l.first = nl
 
-	return &nl
+	return nl
 }
 
 func (l *list) PushBack(v interface{}) *ListItem {
-	nl := ListItem{Value: v, index: l.count}
+	nl := &ListItem{Value: v}
 	l.count++
 
 	if l.count != 1 {
 		nextL := l.last
-		nextL.Next = &nl
+		nextL.Next = nl
 		nl.Prev = nextL
 		nl.Next = nil
 	} else {
-		l.first = &nl
+		l.first = nl
 	}
-	l.last = &nl
+	l.last = nl
 
-	return &nl
+	return nl
 }
 
 func (l *list) Remove(i *ListItem) {

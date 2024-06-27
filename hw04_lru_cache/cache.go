@@ -20,25 +20,25 @@ type lruCache struct {
 }
 
 func (l *lruCache) Set(key Key, value interface{}) bool {
-	v, ok := l.GetListItem(key)
-
-	if !ok {
-		ni := l.queue.PushFront(CacheEl{Key: key, Val: value})
-		l.items[key] = ni
-
-		if l.capacity < len(l.items) {
-			remove := l.queue.Back()
-			s := (remove.Value).(CacheEl)
-			delete(l.items, s.Key)
-			l.queue.Remove(remove)
-		}
-	} else {
+	if v, ok := l.GetListItem(key); ok {
 		s := (v.Value).(CacheEl)
 		s.Val = value
 		v.Value = s
+
+		return ok
 	}
 
-	return ok
+	ni := l.queue.PushFront(CacheEl{Key: key, Val: value})
+	l.items[key] = ni
+
+	if l.capacity < len(l.items) {
+		remove := l.queue.Back()
+		s := (remove.Value).(CacheEl)
+		delete(l.items, s.Key)
+		l.queue.Remove(remove)
+	}
+
+	return false
 }
 
 func (l *lruCache) GetListItem(key Key) (*ListItem, bool) {
