@@ -48,23 +48,24 @@ func Run(tasks []Task, n, m int) error {
 func work(wg *sync.WaitGroup, schedule chan Task, m *ErrC, quitCh chan struct{}) {
 	defer wg.Done()
 	for {
+		task, ok := <-schedule
+		if !ok {
+			break
+		}
+		err := task()
+		m.mu.Lock()
+		if err != nil {
+			m.i--
+		}
 		if m.i <= 0 {
 			select {
 			case <-quitCh:
 			default:
 				close(quitCh)
 			}
+			m.mu.Unlock()
 			return
 		}
-		task, ok := <-schedule
-		if !ok {
-			break
-		}
-		err := task()
-		if err != nil {
-			m.mu.Lock()
-			m.i--
-			m.mu.Unlock()
-		}
+		m.mu.Unlock()
 	}
 }
