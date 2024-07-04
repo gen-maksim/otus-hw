@@ -1,4 +1,4 @@
-module github.com/fixme_my_friend/hw05parallelexecution
+module github.com/gen-maksim/otus-hw/hw05_parallel_execution
 
 go 1.22
 

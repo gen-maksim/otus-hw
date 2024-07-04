@@ -3,69 +3,52 @@ package hw05parallelexecution
 import (
 	"errors"
 	"sync"
-	"time"
+	"sync/atomic"
 )
 
 var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
 
 type Task func() error
 
-type ErrC struct {
-	mu sync.Mutex
-	i  int
-}
-
 // Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
 func Run(tasks []Task, n, m int) error {
 	wg := &sync.WaitGroup{}
 	schedule := make(chan Task, n)
 	quitCh := make(chan struct{})
-	errC := &ErrC{i: m}
+	errs := &atomic.Int32{}
+	errs.Store(int32(m))
+
 	for i := 0; i < n; i++ {
 		wg.Add(1)
-		go work(wg, schedule, errC, quitCh)
+		go work(wg, schedule, errs, quitCh)
 	}
 
 	defer wg.Wait()
 	defer close(schedule)
-
-	taskI := 0
-	for {
+	for _, task := range tasks {
 		select {
 		case <-quitCh:
 			return ErrErrorsLimitExceeded
-		case schedule <- tasks[taskI]:
-			taskI++
-			if taskI == len(tasks) {
-				return nil
-			}
-		default:
-			time.Sleep(100 * time.Millisecond)
+		case schedule <- task:
 		}
 	}
+
+	return nil
 }
 
-func work(wg *sync.WaitGroup, schedule chan Task, m *ErrC, quitCh chan struct{}) {
+func work(wg *sync.WaitGroup, schedule chan Task, m *atomic.Int32, quitCh chan struct{}) {
 	defer wg.Done()
-	for {
-		task, ok := <-schedule
-		if !ok {
-			break
-		}
+	for task := range schedule {
 		err := task()
-		m.mu.Lock()
 		if err != nil {
-			m.i--
+			m.Add(-1)
 		}
-		if m.i <= 0 {
+		if m.Load() <= 0 {
 			select {
-			case <-quitCh:
+			case quitCh <- struct{}{}:
 			default:
-				close(quitCh)
 			}
-			m.mu.Unlock()
 			return
 		}
-		m.mu.Unlock()
 	}
 }
