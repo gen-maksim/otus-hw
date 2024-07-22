@@ -15,7 +15,7 @@ const (
 
 func TestPipeline(t *testing.T) {
 	// Stage generator
-	g := func(n string, f func(v interface{}) interface{}) Stage {
+	g := func(_ string, f func(v interface{}) interface{}) Stage {
 		return func(in In) Out {
 			out := make(Bi)
 			go func() {
@@ -89,5 +89,39 @@ func TestPipeline(t *testing.T) {
 
 		require.Len(t, result, 0)
 		require.Less(t, int64(elapsed), int64(abortDur)+int64(fault))
+	})
+
+	stages = []Stage{
+		g("Dummy", func(v interface{}) interface{} { return v }),
+		g("Multiplier (* 2)", func(v interface{}) interface{} { return v.(int) * 2 }),
+		g("Adder (+ 100)", func(v interface{}) interface{} { return v.(int) + 100 }),
+		g("Adder (+ 100)", func(v interface{}) interface{} { return v.(int) + 100 }),
+		g("Adder (+ 100)", func(v interface{}) interface{} { return v.(int) + 100 }),
+		g("Multiplier (* 2)", func(v interface{}) interface{} { return v.(int) * 2 }),
+		g("Stringifier", func(v interface{}) interface{} { return strconv.Itoa(v.(int)) }),
+	}
+
+	t.Run("bigger case", func(t *testing.T) {
+		in := make(Bi)
+		data := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+
+		go func() {
+			for _, v := range data {
+				in <- v
+			}
+			close(in)
+		}()
+
+		result := make([]string, 0, 10)
+		start := time.Now()
+		for s := range ExecutePipeline(in, nil, stages...) {
+			result = append(result, s.(string))
+		}
+		elapsed := time.Since(start)
+
+		require.Equal(t, []string{"604", "608", "612", "616", "620", "624", "628", "632", "636", "640"}, result)
+		require.Less(t,
+			int64(elapsed),
+			int64(sleepPerStage)*int64(len(stages)+len(data)-1)+int64(fault))
 	})
 }
