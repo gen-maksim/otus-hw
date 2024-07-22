@@ -14,6 +14,14 @@ type Stage func(in In) (out Out)
 
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
 	for _, stage := range stages {
+		in = makeDoneStage(in, done, stage)
+	}
+
+	return in
+}
+
+func ExecutePipelinew(in In, done In, stages ...Stage) Out {
+	for _, stage := range stages {
 		numChans := 5
 		finders := make([]<-chan interface{}, numChans)
 		for i := 0; i < numChans; i++ {
