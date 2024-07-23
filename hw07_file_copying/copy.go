@@ -52,7 +52,10 @@ func ReadFile(from string, limit int, offset int, withBar bool) ([]byte, *pb.Pro
 	}
 	defer rFile.Close()
 
-	stat, _ := rFile.Stat()
+	stat, err := rFile.Stat()
+	if err != nil {
+		return nil, nil, ErrUnsupportedFile
+	}
 	contentSize := int(stat.Size())
 	if limit != 0 {
 		if limit+offset >= contentSize {
