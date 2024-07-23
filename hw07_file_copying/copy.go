@@ -25,7 +25,7 @@ func Copy(from, to string, offset, limit int, withBar bool) error {
 
 	wFile, err := os.OpenFile(to, os.O_CREATE|os.O_TRUNC, 0o666)
 	if err != nil {
-		return ErrUnsupportedFile
+		return fmt.Errorf("%w: %w", ErrUnsupportedFile, err)
 	}
 	defer wFile.Close()
 
@@ -36,7 +36,7 @@ func Copy(from, to string, offset, limit int, withBar bool) error {
 
 	_, err = nw.Write(content)
 	if err != nil {
-		return ErrUnsupportedFile
+		return fmt.Errorf("%w: %w", ErrUnsupportedFile, err)
 	}
 
 	if withBar {
@@ -48,6 +48,9 @@ func Copy(from, to string, offset, limit int, withBar bool) error {
 
 func ReadFile(from string, limit int, offset int, withBar bool) ([]byte, *pb.ProgressBar, error) {
 	rFile, err := os.Open(from)
+	if withBar {
+		time.Sleep(1000 * time.Millisecond)
+	}
 	if err != nil {
 		return nil, nil, ErrUnsupportedFile
 	}
