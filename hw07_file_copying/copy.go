@@ -23,7 +23,7 @@ func Copy(from, to string, offset, limit int, withBar bool) error {
 		return err
 	}
 
-	wFile, err := os.OpenFile(to, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, os.ModeAppend)
+	wFile, err := os.OpenFile(to, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o666)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrUnsupportedFile, err)
 	}
