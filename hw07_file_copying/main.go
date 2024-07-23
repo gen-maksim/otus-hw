@@ -2,10 +2,6 @@ package main
 
 import (
 	"flag"
-	"io"
-	"os"
-
-	"github.com/cheggaaa/pb"
 )
 
 var (
@@ -22,46 +18,5 @@ func init() {
 
 func main() {
 	flag.Parse()
-	if limit > 0 {
-		limit++
-	}
-
-	rFile, err := os.Open(from)
-	if err != nil {
-		return
-	}
-	defer rFile.Close()
-
-	stat, _ := rFile.Stat()
-
-	barSize := int(stat.Size())
-	if limit != 0 {
-		barSize = int(limit)
-		if (limit - (stat.Size() - offset)) > 0 {
-			barSize = int(limit - (stat.Size() - offset))
-		}
-	}
-
-	bar := pb.StartNew(barSize * 2)
-
-	content := make([]byte, barSize)
-	_, err = rFile.Seek(offset, io.SeekStart)
-	if err != nil {
-		return
-	}
-
-	barReader := bar.NewProxyReader(rFile)
-	_, err = barReader.Read(content)
-	wFile, err := os.OpenFile(to, os.O_CREATE|os.O_TRUNC, 0666)
-	if err != nil {
-		return
-	}
-	defer wFile.Close()
-
-	barWriter := bar.NewProxyWriter(wFile)
-	_, err = barWriter.Write(content)
-	if err != nil {
-		return
-	}
-	bar.Finish()
+	Copy(from, to, int(offset), int(limit), true)
 }
