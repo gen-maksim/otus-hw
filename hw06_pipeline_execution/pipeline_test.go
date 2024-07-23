@@ -154,6 +154,5 @@ func TestPipeline(t *testing.T) {
 
 		require.NotEmpty(t, result)
 		require.Less(t, int64(elapsed), int64(abortDur)+int64(fault))
-
 	})
 }
