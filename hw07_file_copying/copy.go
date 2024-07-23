@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -65,7 +66,7 @@ func ReadFile(from string, limit int, offset int, withBar bool) ([]byte, *pb.Pro
 		}
 	}
 	if contentSize <= 0 {
-		return nil, nil, ErrOffsetExceedsFileSize
+		return nil, nil, fmt.Errorf("content size was %v :%w", contentSize, ErrOffsetExceedsFileSize)
 	}
 
 	var bar *pb.ProgressBar
