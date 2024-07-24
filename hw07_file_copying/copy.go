@@ -29,7 +29,7 @@ func Copy(from, to string, offset, limit int, withBar bool) error {
 	}
 	defer wFile.Close()
 
-	nw := crlf.NewWriter(wFile)
+	nw := io.Writer(wFile)
 	if withBar {
 		nw = bar.NewProxyWriter(nw)
 	}
