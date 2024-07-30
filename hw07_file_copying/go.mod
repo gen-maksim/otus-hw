@@ -3,7 +3,6 @@ module github.com/gen-maksim/otus-hw/hw07_file_copying
 go 1.22
 
 require (
-	github.com/andybalholm/crlf v0.0.0-20171020200849-670099aa064f
 	github.com/cheggaaa/pb/v3 v3.1.5
 	github.com/stretchr/testify v1.9.0
 )
@@ -18,6 +17,5 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

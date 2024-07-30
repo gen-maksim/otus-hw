@@ -4,11 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"os"
-	"time"
 
-	"github.com/andybalholm/crlf"
 	"github.com/cheggaaa/pb/v3"
 )
 
@@ -18,47 +15,15 @@ var (
 )
 
 func Copy(from, to string, offset, limit int, withBar bool) error {
-	content, bar, err := ReadFile(from, limit, offset, withBar)
-	if err != nil {
-		return err
-	}
-
-	wFile, err := os.OpenFile(to, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o666)
-	if err != nil {
-		return fmt.Errorf("%w: %w", ErrUnsupportedFile, err)
-	}
-	defer wFile.Close()
-
-	nw := io.Writer(wFile)
-	if withBar {
-		nw = bar.NewProxyWriter(nw)
-	}
-
-	_, err = nw.Write(content)
-	if err != nil {
-		return fmt.Errorf("%w: %w", ErrUnsupportedFile, err)
-	}
-
-	if withBar {
-		bar.Finish()
-	}
-
-	return nil
-}
-
-func ReadFile(from string, limit int, offset int, withBar bool) ([]byte, *pb.ProgressBar, error) {
 	rFile, err := os.Open(from)
-	if withBar {
-		time.Sleep(1000 * time.Millisecond)
-	}
 	if err != nil {
-		return nil, nil, ErrUnsupportedFile
+		return ErrUnsupportedFile
 	}
 	defer rFile.Close()
 
 	stat, err := rFile.Stat()
 	if err != nil {
-		return nil, nil, ErrUnsupportedFile
+		return ErrUnsupportedFile
 	}
 	contentSize := int(stat.Size())
 	if limit != 0 {
@@ -68,60 +33,38 @@ func ReadFile(from string, limit int, offset int, withBar bool) ([]byte, *pb.Pro
 			contentSize = limit
 		}
 	}
-	if contentSize <= 0 {
-		return nil, nil, fmt.Errorf("content size was %v :%w", contentSize, ErrOffsetExceedsFileSize)
+	if contentSize < 0 {
+		return ErrOffsetExceedsFileSize
 	}
+
+	_, err = rFile.Seek(int64(offset), 0)
+	if err != nil {
+		return ErrOffsetExceedsFileSize
+	}
+
+	wFile, err := os.OpenFile(to, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, os.FileMode(0o666))
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrUnsupportedFile, err)
+	}
+	defer wFile.Close()
 
 	var bar *pb.ProgressBar
+	nr := io.Reader(rFile)
+	nw := io.Writer(wFile)
 	if withBar {
-		bar = pb.Full.Start(contentSize * 2)
+		bar = pb.StartNew(contentSize * 2)
+		nr = bar.NewProxyReader(rFile)
+		nw = bar.NewProxyWriter(nw)
 	}
 
-	content := make([]byte, contentSize)
-	reader := crlf.NewReader(rFile)
-	content = DynamicRead(contentSize, offset, reader, content, bar)
+	_, err = io.CopyN(nw, nr, int64(contentSize))
+	if err != nil {
+		return err
+	}
+
 	if withBar {
-		bar.SetTotal(int64(len(content) * 2))
+		bar.Finish()
 	}
 
-	return content, bar, err
-}
-
-func DynamicRead(limit, offset int, reader io.Reader, content []byte, bar *pb.ProgressBar) []byte {
-	offsetBytes := make([]byte, offset)
-	wasRead := 0
-	for wasRead < limit {
-		read := 0
-		var err error
-		if offset > 0 {
-			read, err = reader.Read(offsetBytes)
-			if offset >= read {
-				offset -= read
-				read = 0
-			} else {
-				bytes := offsetBytes[offset:read]
-				read -= offset
-				bytes = append(bytes, content[read:]...)
-				content = bytes
-				offset = 0
-			}
-		} else {
-			read, err = reader.Read(content[wasRead:])
-		}
-
-		wasRead += read
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				content = content[:wasRead]
-				break
-			}
-			log.Panicf("failed to read: %v", err)
-		}
-
-		if bar != nil {
-			bar.Add(read)
-			time.Sleep(500 * time.Millisecond)
-		}
-	}
-	return content
+	return nil
 }
