@@ -52,9 +52,8 @@ func Copy(from, to string, offset, limit int, withBar bool) error {
 	nr := io.Reader(rFile)
 	nw := io.Writer(wFile)
 	if withBar {
-		bar = pb.StartNew(contentSize * 2)
+		bar = pb.StartNew(contentSize)
 		nr = bar.NewProxyReader(rFile)
-		nw = bar.NewProxyWriter(nw)
 	}
 
 	_, err = io.CopyN(nw, nr, int64(contentSize))

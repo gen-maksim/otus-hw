@@ -16,7 +16,6 @@ linters-settings:
           - "!$test"
         allow:
           - $gostd
-          - github.com/andybalholm/crlf
           - github.com/cheggaaa/pb/v3
       test:
         files:
