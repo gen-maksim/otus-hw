@@ -14,11 +14,12 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 		os.Setenv(s, value.Value)
 	}
 
-	if strings.Contains(cmd[0], "env") || strings.Contains(cmd[1], "bash") {
+	name := cmd[0]
+	if !strings.Contains(name, "bash") {
 		return -1
 	}
 
-	command := exec.Command(cmd[0], cmd[1:]...)
+	command := exec.Command(name, cmd[1:]...)
 	command.Stdout = os.Stdout
 	err := command.Run()
 	if err != nil {
