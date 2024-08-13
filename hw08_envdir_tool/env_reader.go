@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -26,7 +27,7 @@ func ReadDir(dir string) (Environment, error) {
 			continue
 		}
 
-		value, err := readEnv(dir + "/" + file.Name())
+		value, err := readEnv(filepath.Join(dir, file.Name()))
 		if err != nil {
 			return nil, err
 		}
