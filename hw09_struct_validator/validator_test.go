@@ -2,8 +2,11 @@ package hw09structvalidator
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type UserRole string
@@ -42,10 +45,38 @@ func TestValidate(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			// Place your code here.
+			in: App{Version: "123456"},
+			expectedErr: ValidationErrors{ValidationError{
+				Field: "Version",
+				Err:   errors.New("length should be less than or equal to 5"),
+			}},
 		},
-		// ...
-		// Place your code here.
+		{
+			in: Response{Code: 300, Body: ""},
+			expectedErr: ValidationErrors{ValidationError{
+				Field: "Code",
+				Err:   errors.New("value should be in 200,404,500"),
+			}},
+		},
+		{
+			in:          Response{Code: 200, Body: ""},
+			expectedErr: nil,
+		},
+		{
+			in: User{
+				ID:     "123423",
+				Name:   "John",
+				Age:    88,
+				Email:  "@.@mail",
+				Role:   "worker",
+				Phones: []string{"1234567891011"},
+			},
+			expectedErr: ValidationErrors{
+				ValidationError{Field: "Age", Err: errors.New("value should be less or equal 50")},
+				ValidationError{Field: "Email", Err: errors.New("value should match pattern ^\\w+@\\w+\\.\\w+$")},
+				ValidationError{Field: "Role", Err: errors.New("value should be in admin,stuff")},
+			},
+		},
 	}
 
 	for i, tt := range tests {
@@ -53,8 +84,11 @@ func TestValidate(t *testing.T) {
 			tt := tt
 			t.Parallel()
 
-			// Place your code here.
-			_ = tt
+			err := Validate(tt.in)
+			if err != nil {
+				println(err.Error())
+				require.Equal(t, tt.expectedErr, err)
+			}
 		})
 	}
 }
