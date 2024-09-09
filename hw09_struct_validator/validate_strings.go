@@ -2,6 +2,7 @@ package hw09structvalidator
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"regexp"
 	"slices"
@@ -9,11 +10,15 @@ import (
 	"strings"
 )
 
-func validateString(key reflect.StructField, s reflect.Value, rawValidators string) ValidationErrors {
-	validatorAr := strings.Split(rawValidators, "|")
+var (
+	ErrorIn    = errors.New("field should be in")
+	ErrorLen   = errors.New("length of field should be equal to")
+	ErrorRegex = errors.New("field should match pattern")
+)
+
+func validateString(key reflect.StructField, s reflect.Value, validatorAr [][]string) ValidationErrors {
 	var errBag ValidationErrors
-	for _, oneRawVal := range validatorAr {
-		oneVal := strings.Split(oneRawVal, ":")
+	for _, oneVal := range validatorAr {
 		var err error
 
 		switch oneVal[0] {
@@ -43,7 +48,7 @@ func validateIn(n string, rawValidators string) error {
 		return nil
 	}
 
-	return errors.New("value should be in " + rawValidators)
+	return fmt.Errorf("%w %s", ErrorIn, rawValidators)
 }
 
 func validateLen(n string, length string) error {
@@ -52,8 +57,8 @@ func validateLen(n string, length string) error {
 		return err
 	}
 
-	if len(n) > l {
-		return errors.New("length should be less than or equal to " + length)
+	if len(n) != l {
+		return fmt.Errorf("%w %s", ErrorLen, length)
 	}
 
 	return nil
@@ -65,7 +70,7 @@ func validateRegex(n string, regex string) error {
 		return err
 	}
 	if !match {
-		return errors.New("value should match pattern " + regex)
+		return fmt.Errorf("%w %s", ErrorRegex, regex)
 	}
 
 	return nil

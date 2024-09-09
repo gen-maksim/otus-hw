@@ -2,8 +2,8 @@ package hw09structvalidator
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -14,7 +14,7 @@ type UserRole string
 // Test the function on different structures and other types.
 type (
 	User struct {
-		ID     string `json:"id" validate:"len:36"`
+		ID     string `json:"id" validate:"len:6"`
 		Name   string
 		Age    int             `validate:"min:18|max:50"`
 		Email  string          `validate:"regexp:^\\w+@\\w+\\.\\w+$"`
@@ -25,6 +25,10 @@ type (
 
 	App struct {
 		Version string `validate:"len:5"`
+	}
+
+	Order struct {
+		Items int `validate:"max:a5"`
 	}
 
 	Token struct {
@@ -48,15 +52,14 @@ func TestValidate(t *testing.T) {
 			in: App{Version: "123456"},
 			expectedErr: ValidationErrors{ValidationError{
 				Field: "Version",
-				Err:   errors.New("length should be less than or equal to 5"),
+				Err:   ErrorLen,
 			}},
 		},
 		{
 			in: Response{Code: 300, Body: ""},
-			expectedErr: ValidationErrors{ValidationError{
-				Field: "Code",
-				Err:   errors.New("value should be in 200,404,500"),
-			}},
+			expectedErr: ValidationErrors{
+				ValidationError{Field: "Code", Err: ErrorIn},
+			},
 		},
 		{
 			in:          Response{Code: 200, Body: ""},
@@ -69,13 +72,25 @@ func TestValidate(t *testing.T) {
 				Age:    88,
 				Email:  "@.@mail",
 				Role:   "worker",
-				Phones: []string{"1234567891011"},
+				Phones: []string{"1234567891011", "123456789101121"},
 			},
 			expectedErr: ValidationErrors{
-				ValidationError{Field: "Age", Err: errors.New("value should be less or equal 50")},
-				ValidationError{Field: "Email", Err: errors.New("value should match pattern ^\\w+@\\w+\\.\\w+$")},
-				ValidationError{Field: "Role", Err: errors.New("value should be in admin,stuff")},
+				ValidationError{Field: "Age", Err: ErrorMax},
+				ValidationError{Field: "Email", Err: ErrorRegex},
+				ValidationError{Field: "Role", Err: ErrorIn},
+				ValidationError{Field: "Phones", Err: ErrorLen},
+				ValidationError{Field: "Phones", Err: ErrorLen},
 			},
+		},
+		{
+			in: Order{
+				Items: 12,
+			},
+			expectedErr: strconv.ErrSyntax,
+		},
+		{
+			in:          1234,
+			expectedErr: nil,
 		},
 	}
 
@@ -85,10 +100,7 @@ func TestValidate(t *testing.T) {
 			t.Parallel()
 
 			err := Validate(tt.in)
-			if err != nil {
-				println(err.Error())
-				require.Equal(t, tt.expectedErr, err)
-			}
+			require.ErrorIs(t, err, tt.expectedErr)
 		})
 	}
 }

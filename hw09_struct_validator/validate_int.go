@@ -2,30 +2,39 @@ package hw09structvalidator
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strconv"
-	"strings"
 )
 
-func validateInt(key reflect.StructField, s reflect.Value, rawValidators string) ValidationErrors {
-	validatorAr := strings.Split(rawValidators, "|")
+var (
+	ErrorMin = errors.New("field should be more or equal")
+	ErrorMax = errors.New("field should be less or equal")
+)
+
+func validateInt(key reflect.StructField, s reflect.Value, validatorAr [][]string) error {
 	var errBag ValidationErrors
-	for _, oneRawVal := range validatorAr {
-		oneVal := strings.Split(oneRawVal, ":")
+	for _, oneVal := range validatorAr {
 		var err error
 
 		switch oneVal[0] {
 		case "in":
 			err = validateIn(strconv.FormatInt(s.Int(), 10), oneVal[1])
 		case "min":
-			minV, _ := strconv.Atoi(oneVal[1])
+			minV, sysErr := strconv.Atoi(oneVal[1])
+			if sysErr != nil {
+				return sysErr
+			}
 			if int64(minV) >= s.Int() {
-				err = errors.New("value should be more or equal " + oneVal[1])
+				err = fmt.Errorf("%w %v", ErrorMin, oneVal[1])
 			}
 		case "max":
-			minV, _ := strconv.Atoi(oneVal[1])
+			minV, sysErr := strconv.Atoi(oneVal[1])
+			if sysErr != nil {
+				return sysErr
+			}
 			if int64(minV) <= s.Int() {
-				err = errors.New("value should be less or equal " + oneVal[1])
+				err = fmt.Errorf("%w %v", ErrorMax, oneVal[1])
 			}
 		}
 
