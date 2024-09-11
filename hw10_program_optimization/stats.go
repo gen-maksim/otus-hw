@@ -9,18 +9,39 @@ import (
 )
 
 type User struct {
-	ID       int
-	Name     string
-	Username string
-	Email    string
-	Phone    string
-	Password string
-	Address  string
+	Email string
 }
 
 type DomainStat map[string]int
 
 func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
+	u, err := domainStat(r, domain)
+	if err != nil {
+		return nil, fmt.Errorf("get users error: %w", err)
+	}
+	return u, nil
+}
+
+func domainStat(r io.Reader, domain string) (DomainStat, error) {
+	dec := json.NewDecoder(r)
+	result := make(DomainStat)
+	for {
+		var user User
+		if err := dec.Decode(&user); err == io.EOF {
+			break
+		}
+
+		if strings.HasSuffix(user.Email, "."+domain) {
+			lower := strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])
+			num := result[lower]
+			result[lower] = num + 1
+		}
+	}
+
+	return result, nil
+}
+
+func GetDomainStatOld(r io.Reader, domain string) (DomainStat, error) {
 	u, err := getUsers(r)
 	if err != nil {
 		return nil, fmt.Errorf("get users error: %w", err)
