@@ -12,29 +12,29 @@ var (
 	ErrorMax = errors.New("field should be less or equal")
 )
 
-func validateInt(key reflect.StructField, s reflect.Value, validatorAr [][]string) error {
+func validateInt(key reflect.StructField, s reflect.Value, validatorAr []ParsedValidator) error {
 	var errBag ValidationErrors
 	for _, oneVal := range validatorAr {
 		var err error
 
-		switch oneVal[0] {
+		switch oneVal.CondType {
 		case "in":
-			err = validateIn(strconv.FormatInt(s.Int(), 10), oneVal[1])
+			err = validateIn(strconv.FormatInt(s.Int(), 10), oneVal.CondVal)
 		case "min":
-			minV, sysErr := strconv.Atoi(oneVal[1])
+			minV, sysErr := strconv.Atoi(oneVal.CondVal)
 			if sysErr != nil {
 				return sysErr
 			}
 			if int64(minV) >= s.Int() {
-				err = fmt.Errorf("%w %v", ErrorMin, oneVal[1])
+				err = fmt.Errorf("%w %v", ErrorMin, oneVal.CondVal)
 			}
 		case "max":
-			minV, sysErr := strconv.Atoi(oneVal[1])
+			minV, sysErr := strconv.Atoi(oneVal.CondVal)
 			if sysErr != nil {
 				return sysErr
 			}
 			if int64(minV) <= s.Int() {
-				err = fmt.Errorf("%w %v", ErrorMax, oneVal[1])
+				err = fmt.Errorf("%w %v", ErrorMax, oneVal.CondVal)
 			}
 		}
 

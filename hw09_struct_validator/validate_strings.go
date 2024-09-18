@@ -16,18 +16,18 @@ var (
 	ErrorRegex = errors.New("field should match pattern")
 )
 
-func validateString(key reflect.StructField, s reflect.Value, validatorAr [][]string) ValidationErrors {
+func validateString(key reflect.StructField, s reflect.Value, validatorAr []ParsedValidator) ValidationErrors {
 	var errBag ValidationErrors
 	for _, oneVal := range validatorAr {
 		var err error
 
-		switch oneVal[0] {
+		switch oneVal.CondType {
 		case "in":
-			err = validateIn(s.String(), oneVal[1])
+			err = validateIn(s.String(), oneVal.CondVal)
 		case "len":
-			err = validateLen(s.String(), oneVal[1])
+			err = validateLen(s.String(), oneVal.CondVal)
 		case "regexp":
-			err = validateRegex(s.String(), oneVal[1])
+			err = validateRegex(s.String(), oneVal.CondVal)
 		}
 
 		if err != nil {

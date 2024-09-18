@@ -7,6 +7,11 @@ import (
 	"strings"
 )
 
+type ParsedValidator struct {
+	CondType string
+	CondVal  string
+}
+
 type ValidationError struct {
 	Field string
 	Err   error
@@ -61,11 +66,11 @@ func Validate(v interface{}) error {
 		err := validateField(field, reflect.ValueOf(v).Field(i), alias)
 		if err != nil {
 			var errT ValidationErrors
-			if errors.As(err, &errT) {
-				errBag = append(errBag, errT...)
-			} else {
+			if !errors.As(err, &errT) {
 				return err
 			}
+
+			errBag = append(errBag, errT...)
 		}
 	}
 
@@ -83,24 +88,25 @@ func validateField(key reflect.StructField, v reflect.Value, validator string) e
 		for i := 0; i < v.Len(); i++ {
 			err := validateField(key, v.Index(i), validator)
 			var errT ValidationErrors
-			if errors.As(err, &errT) {
-				errBag = append(errBag, errT...)
-			} else {
+			if !errors.As(err, &errT) {
 				return err
 			}
+
+			errBag = append(errBag, errT...)
 		}
 
 		return errBag
 	}
 
-	validatorAr := [][]string{}
+	validatorAr := []ParsedValidator{}
 	for _, oneRawVal := range strings.Split(validator, "|") {
 		oneVal := strings.Split(oneRawVal, ":")
 		if len(oneVal) != 2 {
 			continue
 		}
+		parsed := ParsedValidator{CondType: oneVal[0], CondVal: oneVal[1]}
 
-		validatorAr = append(validatorAr, oneVal)
+		validatorAr = append(validatorAr, parsed)
 	}
 
 	if v.Kind() == reflect.String {
