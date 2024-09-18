@@ -29,6 +29,8 @@ func domainStat(r io.Reader, domain string) (DomainStat, error) {
 		var user User
 		if err := dec.Decode(&user); err == io.EOF {
 			break
+		} else if err != nil {
+			return nil, fmt.Errorf("decode error: %w", err)
 		}
 
 		if strings.HasSuffix(user.Email, "."+domain) {
