@@ -36,8 +36,7 @@ func domainStat(r io.Reader, domain string) (DomainStat, error) {
 
 		if strings.HasSuffix(user.Email, "."+domain) {
 			lower := strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])
-			num := result[lower]
-			result[lower] = num + 1
+			result[lower] = result[lower] + 1
 		}
 	}
 
