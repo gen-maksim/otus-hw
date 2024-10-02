@@ -37,7 +37,7 @@ func (t *telnetClient) Connect() error {
 		log.Fatalf("Cannot connect: %v", err)
 	}
 
-	closer := make(chan struct{})
+	t.closer = make(chan struct{})
 	go func() {
 		select {
 		case <-t.closer:
@@ -46,7 +46,6 @@ func (t *telnetClient) Connect() error {
 			conn.Close()
 		}
 	}()
-	t.closer = closer
 	t.Conn = conn
 	return nil
 }
