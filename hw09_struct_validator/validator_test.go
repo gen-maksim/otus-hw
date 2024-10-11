@@ -3,7 +3,10 @@ package hw09structvalidator
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type UserRole string
@@ -11,7 +14,7 @@ type UserRole string
 // Test the function on different structures and other types.
 type (
 	User struct {
-		ID     string `json:"id" validate:"len:36"`
+		ID     string `json:"id" validate:"len:6"`
 		Name   string
 		Age    int             `validate:"min:18|max:50"`
 		Email  string          `validate:"regexp:^\\w+@\\w+\\.\\w+$"`
@@ -22,6 +25,10 @@ type (
 
 	App struct {
 		Version string `validate:"len:5"`
+	}
+
+	Order struct {
+		Items int `validate:"max:a5"`
 	}
 
 	Token struct {
@@ -42,10 +49,49 @@ func TestValidate(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			// Place your code here.
+			in: App{Version: "123456"},
+			expectedErr: ValidationErrors{ValidationError{
+				Field: "Version",
+				Err:   ErrorLen,
+			}},
 		},
-		// ...
-		// Place your code here.
+		{
+			in: Response{Code: 300, Body: ""},
+			expectedErr: ValidationErrors{
+				ValidationError{Field: "Code", Err: ErrorIn},
+			},
+		},
+		{
+			in:          Response{Code: 200, Body: ""},
+			expectedErr: nil,
+		},
+		{
+			in: User{
+				ID:     "123423",
+				Name:   "John",
+				Age:    88,
+				Email:  "@.@mail",
+				Role:   "worker",
+				Phones: []string{"1234567891011", "123456789101121"},
+			},
+			expectedErr: ValidationErrors{
+				ValidationError{Field: "Age", Err: ErrorMax},
+				ValidationError{Field: "Email", Err: ErrorRegex},
+				ValidationError{Field: "Role", Err: ErrorIn},
+				ValidationError{Field: "Phones", Err: ErrorLen},
+				ValidationError{Field: "Phones", Err: ErrorLen},
+			},
+		},
+		{
+			in: Order{
+				Items: 12,
+			},
+			expectedErr: strconv.ErrSyntax,
+		},
+		{
+			in:          1234,
+			expectedErr: nil,
+		},
 	}
 
 	for i, tt := range tests {
@@ -53,8 +99,8 @@ func TestValidate(t *testing.T) {
 			tt := tt
 			t.Parallel()
 
-			// Place your code here.
-			_ = tt
+			err := Validate(tt.in)
+			require.ErrorIs(t, err, tt.expectedErr)
 		})
 	}
 }
