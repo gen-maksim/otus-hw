@@ -41,6 +41,8 @@ func (t *telnetClient) Connect() error {
 	go func() {
 		select {
 		case <-t.closer:
+			cancel()
+			conn.Close()
 		case <-ctx.Done():
 			cancel()
 			conn.Close()
