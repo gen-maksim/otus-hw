@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	sqlstorage "github.com/gen-maksim/otus-hw/hw12_13_14_15_calendar/internal/storage/sql"
 	"os"
 	"os/signal"
 	"syscall"
@@ -31,7 +32,16 @@ func main() {
 	config := NewConfig(configFile)
 	logg := logger.New(config.Logger.Level)
 
-	storage := memorystorage.New()
+	var storage app.Storage
+	switch config.StorageType {
+	case "memory":
+		storage = memorystorage.New()
+	case "sql":
+		storage = sqlstorage.New()
+	default:
+		logg.Error("unknown storage type")
+	}
+
 	calendar := app.New(logg, storage)
 
 	server := internalhttp.NewServer(logg, calendar)
@@ -39,7 +49,7 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
-
+	return
 	go func() {
 		<-ctx.Done()
 

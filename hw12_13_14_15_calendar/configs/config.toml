@@ -1,5 +1,7 @@
+storageType = "memory" #memory or sql
+
 [logger]
-level = "INFO"
+level = "info"
 
 # TODO
 # ...

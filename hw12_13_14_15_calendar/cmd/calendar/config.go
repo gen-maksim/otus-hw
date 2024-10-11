@@ -10,8 +10,8 @@ import (
 // Организация конфига в main принуждает нас сужать API компонентов, использовать
 // при их конструировании только необходимые параметры, а также уменьшает вероятность циклической зависимости.
 type Config struct {
-	Logger LoggerConf `toml:"logger"`
-	// TODO
+	Logger      LoggerConf
+	StorageType string
 }
 
 type LoggerConf struct {
@@ -32,5 +32,5 @@ func NewConfig(path string) Config {
 		log.Fatal(err)
 	}
 
-	return Config{}
+	return conf
 }
